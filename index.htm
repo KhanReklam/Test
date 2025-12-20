@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="az">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product List with WhatsApp Order</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet" />
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+
+<body>
+
+  <style>
+    /* =================== CSS VARIABLES =================== */
+    :root {
+      --primary-color: #ab0102;
+      --secondary-color: #f5f5f5;
+      --text-dark: #333;
+      --text-gray: #666;
+      --white: #fff;
+      --black: #000;
+      --border-light: #ddd;
+      --shadow-light: rgba(0, 0, 0, 0.1);
+      --shadow-medium: rgba(0, 0, 0, 0.3);
+      --shadow-dark: rgba(0, 0, 0, 0.4);
+      --bg-light: #eee;
+      --bg-lighter: #f0f0f0;
+      --bg-extra-light: #f3f3f3;
+      --orange: #ff6600;
+      --whatsapp-green: #25D366;
+      --whatsapp-green-hover: #1ebe5d;
+      --shadow-subtle: rgba(0, 0, 0, 0.15);
+      --sticky-height: 50px;
+
+      /* Typography */
+      --font-primary: 'Poppins', Arial, sans-serif;
+      --font-size-sm: 12px;
+      --font-size-base: 14px;
+      --font-size-md: 16px;
+      --font-size-lg: 18px;
+      --font-size-xl: 24px;
+      --font-size-2xl: 48px;
+
+      /* Spacing */
+      --spacing-xs: 5px;
+      --spacing-sm: 10px;
+      --spacing-md: 15px;
+      --spacing-lg: 20px;
+      --spacing-xl: 30px;
+
+      /* Border Radius */
+      --radius-sm: 4px;
+      --radius-md: 6px;
+      --radius-lg: 8px;
+      --radius-full: 50%;
+      --radius-pill: 20px;
+
+      /* Transitions */
+      --transition-fast: 0.12s ease;
+      --transition-base: 0.2s ease;
+      --transition-slow: 0.3s ease;
+
+      /* Z-Index */
+      --z-loader: 99999;
+      --z-popup: 999;
+      --z-navbar: 100;
+      --z-button: 150;
+
+      /* Button Sizes */
+      --btn-sm: 28px;
+      --btn-md: 40px;
+      --btn-lg: 60px;
+
+      /* Icon Sizes */
+      --icon-sm: 12px;
+      --icon-md: 36px;
+      --icon-lg: 48px;
+    }
+
+    /* =================== ANIMATIONS =================== */
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+        opacity: 0.6;
+      }
+
+      70% {
+        transform: scale(1.6);
+        opacity: 0;
+      }
+
+      100% {
+        opacity: 0;
+      }
+    }
+
+    @keyframes fadeIn {
+      0% {
+        opacity: 0;
+        transform: scale(0.85);
+      }
+
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    /* =================== GENERAL =================== */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-primary);
+      background-color: var(--secondary-color);
+    }
+
+    html {
+      margin: 0;
+      padding: 0;
+      line-height: 1.15;
+      -webkit-text-size-adjust: 100%;
+      scroll-behavior: smooth;
+    }
+
+    /* =================== LOADER =================== */
+    #loader {
+      position: fixed;
+      inset: 0;
+      background: var(--white);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: var(--spacing-md);
+      z-index: var(--z-loader);
+    }
+
+    .logo-loader {
+      width: 90px;
+      height: 90px;
+      position: relative;
+    }
+
+    .logo-loader img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+      /* <-- bunu əlavə et */
+      animation: fadeIn 1.2s ease-in-out forwards;
+    }
+
+    .logo-loader .pulse {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 3px solid var(--primary-color);
+      opacity: 0;
+      animation: pulse 1.6s infinite;
+    }
+
+
+    /* =================== HERO =================== */
+    .hero {
+      position: relative;
+      width: 100%;
+      min-height: 300px;
+      background: var(--primary-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hero-logo-left {
+      position: absolute;
+      left: 20px;
+      bottom: 20px;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: url("./img/hero.jpeg") no-repeat;
+      background-size: cover;
+      background-position: center;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .hero-content {
+      text-align: center;
+      z-index: 1;
+    }
+
+    .hero-title {
+      font-size: var(--font-size-2xl);
+      font-weight: bold;
+      margin: 0;
+      color: var(--bg-extra-light);
+    }
+
+    .hero-subtitle {
+      font-size: var(--font-size-base);
+      margin-top: var(--spacing-xs);
+      color: var(--bg-light);
+    }
+
+    .hero-socials {
+      position: absolute;
+      left: 50%;
+      bottom: var(--spacing-lg);
+      transform: translateX(-50%);
+      display: flex;
+      gap: var(--spacing-md);
+      z-index: 2;
+    }
+
+    .hero-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 1px solid #e5e5e5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: #000;
+      text-decoration: none;
+    }
+
+    .hero-icon:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .fab,
+    .fas {
+      color: var(--white);
+    }
+
+    /* =================== NAVBAR =================== */
+    #category-navbar {
+      position: sticky;
+      top: 0;
+      background: var(--white);
+      display: flex;
+      overflow-x: auto;
+      padding: 10px;
+      gap: 10px;
+      border-bottom: 1px solid #ddd;
+      z-index: 100;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    #category-navbar::-webkit-scrollbar {
+      display: none;
+      /* Chrome, Safari, Opera */
+    }
+
+    .category-btn {
+      text-decoration: none;
+      color: inherit;
+      border: none;
+      background: var(--bg-light);
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--radius-pill);
+      cursor: pointer;
+      white-space: nowrap;
+      display: inline-block;
+      margin-right: var(--spacing-xs);
+      transition: transform var(--transition-fast), background var(--transition-fast);
+    }
+
+    .category-btn:hover,
+    .category-btn.active {
+      background: var(--primary-color);
+      color: var(--white);
+      transform: translateY(-2px);
+    }
+
+    /* =================== PRODUCT CARDS =================== */
+    #product-container {
+      padding: var(--spacing-lg);
+    }
+
+    .product-card {
+      position: relative;
+      display: flex;
+      align-items: center;
+      background: var(--white);
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 4px 8px var(--shadow-light);
+      margin-bottom: var(--spacing-md);
+      flex-wrap: nowrap;
+      cursor: pointer;
+      transition: var(--transition-base);
+    }
+
+    .product-card:hover {
+      box-shadow: 0 6px 16px var(--shadow-subtle);
+      transform: translateY(-2px);
+    }
+
+    .product-card img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+
+    .product-info {
+      flex: 1;
+      margin-left: 15px;
+    }
+
+    .product-info h3 {
+      margin: 0 0 var(--spacing-xs) 0;
+      font-size: var(--font-size-lg);
+      color: var(--text-dark);
+    }
+
+    .product-info p {
+      margin: 0;
+      color: var(--text-gray);
+      font-size: var(--font-size-base);
+    }
+
+    /* =================== COUNT CONTAINER =================== */
+    .countContainer {
+      position: absolute;
+      right: var(--spacing-md);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      background: var(--bg-lighter);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-xs);
+      box-shadow: 0 2px 5px var(--shadow-light);
+    }
+
+    .countContainer button {
+      width: var(--btn-sm);
+      height: var(--btn-sm);
+      border: none;
+      border-radius: var(--radius-sm);
+      background: var(--bg-lighter);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition-base);
+    }
+
+    .countContainer button:hover {
+      background: var(--primary-color);
+      color: var(--white);
+    }
+
+    .countContainer span.count {
+      min-width: var(--spacing-lg);
+      text-align: center;
+      font-weight: bold;
+      font-size: var(--font-size-md);
+    }
+
+    /* =================== WHATSAPP BUTTON =================== */
+    .whatsapp-btn {
+      position: fixed;
+      bottom: var(--spacing-lg);
+      right: var(--spacing-lg);
+      width: var(--btn-lg);
+      height: var(--btn-lg);
+      border-radius: var(--radius-full);
+      border: none;
+      background-color: var(--whatsapp-green);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      box-shadow: 0 4px 10px var(--shadow-dark);
+      z-index: var(--z-button);
+      transition: var(--transition-base);
+    }
+
+    .whatsapp-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 14px var(--shadow-dark);
+    }
+
+    .whatsapp-btn .fab {
+      font-size: var(--icon-md);
+    }
+
+    /* =================== ORDER POPUP =================== */
+    .order-popup {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: var(--z-popup);
+    }
+
+    .order-content {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      width: 90%;
+      max-width: 500px;
+      padding: var(--spacing-lg);
+      box-shadow: 0 5px 15px var(--shadow-dark);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+    }
+
+    .popup-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-light);
+      padding-bottom: var(--spacing-sm);
+    }
+
+    .popup-header h2 {
+      margin: 0;
+      font-size: var(--font-size-xl);
+    }
+
+    .close-popup {
+      cursor: pointer;
+      font-size: var(--font-size-xl);
+      font-weight: bold;
+      transition: var(--transition-base);
+    }
+
+    .close-popup:hover {
+      color: var(--primary-color);
+    }
+
+    .order-items {
+      max-height: 300px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-sm);
+    }
+
+    .order-items div {
+      display: flex;
+      justify-content: space-between;
+      padding: var(--spacing-xs) var(--spacing-sm);
+      border-bottom: 1px solid var(--bg-lighter);
+    }
+
+    .order-total {
+      font-weight: bold;
+      font-size: var(--font-size-lg);
+      text-align: right;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .popup-send-btn {
+      background-color: var(--whatsapp-green);
+      color: var(--white);
+      border: none;
+      padding: var(--spacing-md);
+      font-size: var(--font-size-md);
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: var(--transition-base);
+    }
+
+    .popup-send-btn:hover {
+      background-color: var(--whatsapp-green-hover);
+    }
+
+    /* =================== HERO RESPONSIVE =================== */
+    @media (max-width: 768px) {
+      .hero {
+        min-height: 280px;
+      }
+
+      .hero-title {
+        font-size: 32px;
+      }
+
+      .hero-subtitle {
+        font-size: 12px;
+      }
+
+      .hero-logo-left {
+        width: 60px;
+        height: 60px;
+        left: var(--spacing-md);
+        bottom: var(--spacing-md);
+      }
+
+      .hero-socials {
+        bottom: var(--spacing-md);
+        gap: var(--spacing-sm);
+      }
+
+      .hero-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .hero {
+        min-height: 250px;
+        padding: var(--spacing-md) 0;
+      }
+
+      .hero-content {
+        padding: 0 var(--spacing-sm);
+      }
+
+      .hero-title {
+        font-size: 24px;
+      }
+
+      .hero-subtitle {
+        font-size: 11px;
+        margin-top: var(--spacing-xs);
+      }
+
+      .hero-logo-left {
+        width: 50px;
+        height: 50px;
+        left: var(--spacing-sm);
+        bottom: var(--spacing-sm);
+      }
+
+      .hero-socials {
+        bottom: var(--spacing-sm);
+        gap: var(--spacing-sm);
+      }
+
+      .hero-icon {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+      }
+    }
+  </style>
+
+  <!-- Loader -->
+  <div id="loader">
+    <div class="logo-loader">
+      <img src="./img/hero.jpeg" alt="Logo">
+      <div class="pulse"></div>
+    </div>
+  </div>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-logo-left"></div>
+    <div class="hero-content">
+      <h1 class="hero-title">Khan Reklam</h1>
+      <p class="hero-subtitle">Çap mərkəzi</p>
+    </div>
+    <div class="hero-socials">
+      <a href="https://www.instagram.com/khan_reklam" class="hero-icon" aria-label="Instagram"><i
+          class="fab fa-instagram"></i></a>
+      <a href="https://wa.me/994501234567" class="hero-icon" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+      <a href="https://www.tiktok.com/@khan_reklam" class="hero-icon" aria-label="TikTok"><i
+          class="fab fa-tiktok"></i></a>
+      <a href="https://www.google.com/maps/search/CRHX%2B9J6%2C%20Bak%C4%B1%2C%20Az%C9%99rbaycan/@40.4286,49.849,17z?hl=en"
+        class="hero-icon" aria-label="Location"><i class="fas fa-map-marker-alt"></i></a>
+    </div>
+  </section>
+
+  <!-- Category Navbar -->
+  <div id="category-navbar"></div>
+
+  <!-- Product Container -->
+  <div id="product-container"></div>
+
+  <!-- WhatsApp Floating Circular Button -->
+  <button id="open-order-popup" class="whatsapp-btn">
+    <i class="fab fa-whatsapp"></i>
+  </button>
+
+  <!-- WhatsApp Order Popup -->
+  <div id="order-popup" class="order-popup">
+    <div class="order-content">
+      <div class="popup-header">
+        <h2>Sizin Sifarişiniz</h2>
+        <span class="close-popup">&times;</span>
+      </div>
+
+      <div id="order-items" class="order-items"></div>
+
+      <div class="order-footer">
+        <div id="order-total" class="order-total">Ümumi məbləğ: 0.00 AZN</div>
+        <button id="send-whatsapp" class="popup-send-btn">WhatsApp ilə Göndər</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===================  GET ===================
+    const BASE_URL = 'https://test-38fd9-default-rtdb.asia-southeast1.firebasedatabase.app';
+
+    // Loader - reference existing HTML element
+    const loader = document.getElementById('loader');
+
+    const categories = [];
+    const products = {};
+
+    function fetchData() {
+      const fetchCats = fetch(`${BASE_URL}/categories.json`).then(res =>
+        res.ok ? res.json() : Promise.reject("Categories load failed")
+      );
+      const fetchProds = fetch(`${BASE_URL}/products.json`).then(res =>
+        res.ok ? res.json() : Promise.reject("Products load failed")
+      );
+      return Promise.all([fetchCats, fetchProds]);
+    }
+
+    fetchData()
+      .then(([catsData, prodsData]) => {
+        categories.push(...catsData);
+        Object.assign(products, prodsData);
+        loader.remove();
+        DOM.openBtn().style.display = 'none';
+        firstNavLink = initializeNavbar();
+        filterProducts('all');
+      })
+      .catch(err => {
+        loader.textContent = 'Xəta baş verdi: ' + err.message;
+        console.error(err);
+      });
+
+    // =================== DOM ELEMENTS ===================
+    const DOM = {
+      navbar: () => document.getElementById("category-navbar"),
+      container: () => document.getElementById("product-container"),
+      popup: () => document.getElementById("order-popup"),
+      openBtn: () => document.getElementById("open-order-popup"),
+      closeBtn: () => document.querySelector(".close-popup"),
+      orderBox: () => document.getElementById("order-items"),
+      totalDiv: () => document.getElementById("order-total"),
+      sendBtn: () => document.getElementById("send-whatsapp"),
+    };
+
+    let firstNavLink = null;
+
+    // =================== FILTER PRODUCTS ===================
+    function filterProducts(categoryId) {
+      const container = DOM.container();
+      container.innerHTML = '';
+
+      const catsToShow = categoryId === 'all' ? categories : categories.filter(c => c.id === categoryId);
+
+      catsToShow.forEach((category) => {
+        const section = document.createElement('div');
+        section.className = 'category-section';
+        section.id = category.id;
+
+        const h2 = document.createElement('h2');
+        h2.textContent = category.name;
+        section.appendChild(h2);
+
+        products[category.id].forEach(product => {
+          section.appendChild(createProductCard(product));
+        });
+
+        container.appendChild(section);
+      });
+
+      // Re-initialize observer with new sections
+      initCategoryObserver();
+    }
+
+    // =================== CATEGORY NAVBAR ===================
+    function getStickyHeight() {
+      const height = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sticky-height'));
+      return isNaN(height) ? 50 : height;
+    }
+
+    function activateNavLink(anchor) {
+      document.querySelectorAll('.category-btn').forEach(b => {
+        b.classList.remove('active');
+        b.removeAttribute('aria-current');
+      });
+      anchor.classList.add('active');
+      anchor.setAttribute('aria-current', 'true');
+
+      // Scroll the navbar button into view smoothly
+      if (anchor.scrollIntoView) {
+        anchor.scrollIntoView({ inline: 'center', behavior: 'smooth', block: 'nearest' });
+      }
+    }
+
+    function scrollToSection(sectionId) {
+      const targetEl = document.getElementById(sectionId);
+      if (!targetEl) return;
+
+      // Get position of section
+      const top = targetEl.getBoundingClientRect().top + window.scrollY;
+
+      // Calculate offset to account for sticky navbar
+      const stickyHeight = getStickyHeight();
+      const offset = Math.max(stickyHeight, 72);
+
+      // Smooth scroll with proper offset
+      window.scrollTo({
+        top: top - offset + 8,
+        behavior: 'smooth'
+      });
+    }
+
+    function initializeNavbar() {
+      const navbar = DOM.navbar();
+      if (!navbar) return null;
+
+      // Add category buttons
+      categories.forEach((category) => {
+        const a = document.createElement('a');
+        a.className = 'category-btn';
+        a.textContent = category.name;
+        a.href = '#' + encodeURIComponent(String(category.id));
+        a.dataset.id = category.id;
+        a.dataset.target = category.id;
+
+        a.addEventListener('click', (e) => {
+          e.preventDefault();
+          activateNavLink(a);
+          filterProducts(category.id);
+          scrollToSection(category.id);
+          showAllButton();
+        });
+
+        navbar.appendChild(a);
+      });
+
+      return navbar.querySelector('.category-btn');
+    }
+
+    function showAllButton() {
+      const navbar = DOM.navbar();
+      let allBtn = navbar.querySelector('.category-btn[data-id="all"]');
+
+      // If "All" button doesn't exist, create it
+      if (!allBtn) {
+        allBtn = document.createElement('a');
+        allBtn.className = 'category-btn';
+        allBtn.textContent = 'Hamısı';
+        allBtn.href = '#all';
+        allBtn.dataset.id = 'all';
+        allBtn.dataset.target = 'all';
+
+        allBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          activateNavLink(allBtn);
+          filterProducts('all');
+          hideAllButton();
+        });
+
+        navbar.prepend(allBtn);
+      }
+    }
+
+    function hideAllButton() {
+      const navbar = DOM.navbar();
+      const allBtn = navbar.querySelector('.category-btn[data-id="all"]');
+      if (allBtn) {
+        allBtn.remove();
+      }
+    }
+
+    // =================== PRODUCT CARDS ===================
+    function createProductCard(product) {
+      const card = document.createElement('div');
+      card.className = 'product-card';
+      card.innerHTML = `
+    <img src="${product.img}">
+    <div class="product-info">
+      <h3>${product.name}</h3>
+      <p>${product.desc}</p>
+      <p class="price">Qiymət: ${product.price} AZN</p>
+    </div>
+    <div class="countContainer">
+      <button class="minus">−</button>
+      <span class="count">${product.quantity}</span>
+      <button class="plus">+</button>
+    </div>
+  `;
+
+      const countSpan = card.querySelector('.count');
+
+      const updateQty = (delta) => {
+        if (delta < 0 && product.quantity === 0) return;
+        product.quantity += delta;
+        countSpan.textContent = product.quantity;
+        updateOrderList();
+      };
+
+      card.querySelector('.plus').addEventListener('click', () => updateQty(1));
+      card.querySelector('.minus').addEventListener('click', () => updateQty(-1));
+
+      return card;
+    }
+
+    // =================== OBSERVER ===================
+    function initCategoryObserver() {
+      const visibility = new Map(); // id -> ratio
+      const stickyHeight = getStickyHeight();
+      const rootMarginPx = Math.round(stickyHeight / 2);
+
+      const observer = new IntersectionObserver((entries) => {
+        // Update visibility map with current intersection ratios
+        entries.forEach(entry => {
+          visibility.set(entry.target.id, entry.intersectionRatio);
+        });
+
+        // Find section with highest visibility ratio
+        let bestId = null;
+        let bestRatio = 0;
+        for (const [id, ratio] of visibility.entries()) {
+          if (ratio > bestRatio) {
+            bestRatio = ratio;
+            bestId = id;
+          }
+        }
+
+        // Activate the most visible section's button
+        if (bestId) {
+          document.querySelectorAll('.category-btn').forEach(btn => {
+            const isActive = btn.dataset.target === bestId;
+            btn.classList.toggle('active', isActive);
+            if (isActive) {
+              btn.setAttribute('aria-current', 'true');
+              // Ensure active button is visible in navbar without changing page scroll
+              if (btn.scrollIntoView) {
+                btn.scrollIntoView({ inline: 'center', behavior: 'smooth', block: 'nearest' });
+              }
+            } else {
+              btn.removeAttribute('aria-current');
+            }
+          });
+        }
+      }, {
+        // Use multiple thresholds for precise visibility tracking
+        threshold: [0, 0.05, 0.1, 0.25, 0.5, 0.75, 1.0],
+        // Root margin accounts for sticky navbar height
+        rootMargin: `-${rootMarginPx}px 0px -${rootMarginPx}px 0px`
+      });
+
+      // Observe each category section
+      document.querySelectorAll(".category-section").forEach(section => {
+        visibility.set(section.id, 0);
+        observer.observe(section);
+      });
+    }
+
+    // Initialize observer after page load to ensure proper visibility calculations
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        initCategoryObserver();
+      }, 50);
+    });
+
+    // =================== POPUP ===================
+    function initializePopup() {
+      const popup = DOM.popup();
+      const closePopup = () => (popup.style.display = 'none');
+
+      DOM.openBtn().addEventListener('click', () => {
+        updateOrderList();
+        popup.style.display = 'flex';
+      });
+
+      DOM.closeBtn().addEventListener('click', closePopup);
+      popup.addEventListener('click', (e) => e.target === popup && closePopup());
+    }
+    initializePopup();
+
+    // =================== ORDER TOTAL ===================
+    function calculateOrderTotal() {
+      const items = [];
+      let totalCents = 0;
+
+      for (const cat in products) {
+        products[cat].forEach((product) => {
+          if (product.quantity > 0) {
+            const itemTotal = product.quantity * product.price;
+            totalCents += Math.round(itemTotal * 100);
+
+            items.push({
+              name: product.name,
+              quantity: product.quantity,
+              price: product.price,
+              itemTotal: itemTotal,
+            });
+          }
+        });
+      }
+
+      return {
+        items: items,
+        total: totalCents / 100,
+      };
+    }
+
+    // =================== UPDATE ORDER LIST ===================
+    function updateOrderList() {
+      const orderData = calculateOrderTotal();
+      const orderBox = DOM.orderBox();
+      const openBtn = DOM.openBtn();
+
+      orderBox.innerHTML = '';
+
+      if (orderData.items.length === 0) {
+        DOM.totalDiv().textContent = 'Ümumi məbləğ: 0.00 AZN';
+        openBtn.style.display = 'none';
+        return;
+      }
+
+      openBtn.style.display = 'flex';
+
+      orderData.items.forEach(item => {
+        const div = document.createElement('div');
+        div.innerHTML = `<span>${item.name} x ${item.quantity}</span><span>${item.itemTotal.toFixed(2)} AZN</span>`;
+        orderBox.appendChild(div);
+      });
+
+      DOM.totalDiv().textContent =
+        `Ümumi məbləğ: ${orderData.total.toFixed(2)} AZN`;
+    }
+
+    // =================== SEND WHATSAPP ===================
+    const WHATSAPP_PHONE = "515935433";
+
+    function formatOrderMessage(orderData) {
+      const items = orderData.items
+        .map(item => `${item.name}: ${item.quantity} — ${item.itemTotal.toFixed(2)} AZN`)
+        .join('\n');
+
+      return `*Sifariş siyahısı:*\n\n${items}\n\nÜmumi məbləğ: ${orderData.total.toFixed(2)} AZN`;
+    }
+
+    function sendOrderViaWhatsApp() {
+      const orderData = calculateOrderTotal();
+
+      if (orderData.items.length === 0) {
+        alert('Səbətiniz boşdur!');
+        return;
+      }
+
+      window.open(
+        `https://wa.me/994${WHATSAPP_PHONE}?text=${encodeURIComponent(formatOrderMessage(orderData))}`,
+        '_blank'
+      );
+    }
+
+    DOM.sendBtn().addEventListener('click', sendOrderViaWhatsApp);
+
+  </script>
+</body>
+
+</html>
