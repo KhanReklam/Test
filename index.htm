@@ -545,7 +545,7 @@
         bottom: 10px;
       }
 
-     
+
 
       .hero-icon {
         width: 28px;
@@ -687,23 +687,34 @@
   </div>
 
   <script>
-    // ===================  GET ===================
+    // =================== CONFIG ===================
     const BASE_URL = 'https://test-38fd9-default-rtdb.asia-southeast1.firebasedatabase.app';
+    const WHATSAPP_PHONE = "515935433";
 
-    // Loader - reference existing HTML element
+    // =================== GLOBAL STATE ===================
     const loader = document.getElementById('loader');
-
     const categories = [];
     const products = {};
+    let firstNavLink = null;
+    let lastActiveId = null;
 
+    // =================== DOM HELPERS ===================
+    const DOM = {
+      navbar: () => document.getElementById("category-navbar"),
+      container: () => document.getElementById("product-container"),
+      popup: () => document.getElementById("order-popup"),
+      openBtn: () => document.getElementById("open-order-popup"),
+      closeBtn: () => document.querySelector(".close-popup"),
+      orderBox: () => document.getElementById("order-items"),
+      totalDiv: () => document.getElementById("order-total"),
+      sendBtn: () => document.getElementById("send-whatsapp"),
+    };
+
+    // =================== FETCH DATA ===================
     function fetchData() {
-      const fetchCats = fetch(`${BASE_URL}/categories.json`).then(res =>
-        res.ok ? res.json() : Promise.reject("Categories load failed")
-      );
-      const fetchProds = fetch(`${BASE_URL}/products.json`).then(res =>
-        res.ok ? res.json() : Promise.reject("Products load failed")
-      );
-      return Promise.all([fetchCats, fetchProds]);
+      const cats = fetch(`${BASE_URL}/categories.json`).then(r => r.json());
+      const prods = fetch(`${BASE_URL}/products.json`).then(r => r.json());
+      return Promise.all([cats, prods]);
     }
 
     fetchData()
@@ -716,32 +727,28 @@
         filterProducts('all');
       })
       .catch(err => {
-        loader.textContent = 'Xəta baş verdi: ' + err.message;
+        loader.textContent = 'Xəta baş verdi';
         console.error(err);
       });
 
-    // =================== DOM ELEMENTS ===================
-    const DOM = {
-      navbar: () => document.getElementById("category-navbar"),
-      container: () => document.getElementById("product-container"),
-      popup: () => document.getElementById("order-popup"),
-      openBtn: () => document.getElementById("open-order-popup"),
-      closeBtn: () => document.querySelector(".close-popup"),
-      orderBox: () => document.getElementById("order-items"),
-      totalDiv: () => document.getElementById("order-total"),
-      sendBtn: () => document.getElementById("send-whatsapp"),
-    };
-
-    let firstNavLink = null;
+    // =================== STICKY HEIGHT ===================
+    function getStickyHeight() {
+      if (window.innerWidth <= 480) return 64;
+      const h = parseInt(getComputedStyle(document.documentElement)
+        .getPropertyValue('--sticky-height'));
+      return isNaN(h) ? 50 : h;
+    }
 
     // =================== FILTER PRODUCTS ===================
     function filterProducts(categoryId) {
       const container = DOM.container();
       container.innerHTML = '';
 
-      const catsToShow = categoryId === 'all' ? categories : categories.filter(c => c.id === categoryId);
+      const cats = categoryId === 'all'
+        ? categories
+        : categories.filter(c => c.id === categoryId);
 
-      catsToShow.forEach((category) => {
+      cats.forEach(category => {
         const section = document.createElement('div');
         section.className = 'category-section';
         section.id = category.id;
@@ -750,73 +757,62 @@
         h2.textContent = category.name;
         section.appendChild(h2);
 
-        products[category.id].forEach(product => {
-          section.appendChild(createProductCard(product));
-        });
+        products[category.id].forEach(p =>
+          section.appendChild(createProductCard(p))
+        );
 
         container.appendChild(section);
       });
 
-      // Re-initialize observer with new sections
       initCategoryObserver();
     }
 
-    // =================== CATEGORY NAVBAR ===================
-    function getStickyHeight() {
-      const height = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sticky-height'));
-      return isNaN(height) ? 50 : height;
-    }
-
+    // =================== NAVBAR ===================
     function activateNavLink(anchor) {
+      if (lastActiveId === anchor.dataset.target) return;
+      lastActiveId = anchor.dataset.target;
+
       document.querySelectorAll('.category-btn').forEach(b => {
         b.classList.remove('active');
         b.removeAttribute('aria-current');
       });
+
       anchor.classList.add('active');
       anchor.setAttribute('aria-current', 'true');
 
-      // Scroll the navbar button into view smoothly
-      if (anchor.scrollIntoView) {
-        anchor.scrollIntoView({ inline: 'center', behavior: 'smooth', block: 'nearest' });
-      }
+      anchor.scrollIntoView({
+        inline: 'center',
+        behavior: 'smooth',
+        block: 'nearest'
+      });
     }
 
-    function scrollToSection(sectionId) {
-      const targetEl = document.getElementById(sectionId);
-      if (!targetEl) return;
+    function scrollToSection(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
 
-      // Get position of section
-      const top = targetEl.getBoundingClientRect().top + window.scrollY;
-
-      // Calculate offset to account for sticky navbar
-      const stickyHeight = getStickyHeight();
-      const offset = Math.max(stickyHeight, 72);
-
-      // Smooth scroll with proper offset
+      const top = el.getBoundingClientRect().top + window.scrollY;
       window.scrollTo({
-        top: top - offset + 8,
+        top: top - getStickyHeight() + 8,
         behavior: 'smooth'
       });
     }
 
     function initializeNavbar() {
       const navbar = DOM.navbar();
-      if (!navbar) return null;
 
-      // Add category buttons
-      categories.forEach((category) => {
+      categories.forEach(cat => {
         const a = document.createElement('a');
         a.className = 'category-btn';
-        a.textContent = category.name;
-        a.href = '#' + encodeURIComponent(String(category.id));
-        a.dataset.id = category.id;
-        a.dataset.target = category.id;
+        a.textContent = cat.name;
+        a.dataset.target = cat.id;
+        a.href = '#';
 
-        a.addEventListener('click', (e) => {
+        a.addEventListener('click', e => {
           e.preventDefault();
           activateNavLink(a);
-          filterProducts(category.id);
-          scrollToSection(category.id);
+          filterProducts(cat.id);
+          scrollToSection(cat.id);
           showAllButton();
         });
 
@@ -828,179 +824,146 @@
 
     function showAllButton() {
       const navbar = DOM.navbar();
-      let allBtn = navbar.querySelector('.category-btn[data-id="all"]');
+      if (navbar.querySelector('[data-target="all"]')) return;
 
-      // If "All" button doesn't exist, create it
-      if (!allBtn) {
-        allBtn = document.createElement('a');
-        allBtn.className = 'category-btn';
-        allBtn.textContent = 'Hamısı';
-        allBtn.href = '#all';
-        allBtn.dataset.id = 'all';
-        allBtn.dataset.target = 'all';
+      const all = document.createElement('a');
+      all.className = 'category-btn';
+      all.textContent = 'Hamısı';
+      all.dataset.target = 'all';
+      all.href = '#';
 
-        allBtn.addEventListener('click', (e) => {
-          e.preventDefault();
-          activateNavLink(allBtn);
-          filterProducts('all');
-          hideAllButton();
-        });
+      all.addEventListener('click', e => {
+        e.preventDefault();
+        activateNavLink(all);
+        filterProducts('all');
+        all.remove();
+      });
 
-        navbar.prepend(allBtn);
-      }
+      navbar.prepend(all);
     }
 
-    function hideAllButton() {
-      const navbar = DOM.navbar();
-      const allBtn = navbar.querySelector('.category-btn[data-id="all"]');
-      if (allBtn) {
-        allBtn.remove();
-      }
-    }
-
-    // =================== PRODUCT CARDS ===================
+    // =================== PRODUCT CARD ===================
     function createProductCard(product) {
       const card = document.createElement('div');
       card.className = 'product-card';
+
       card.innerHTML = `
-    <img src="${product.img}">
-    <div class="product-info">
-      <h3>${product.name}</h3>
-      <p>${product.desc}</p>
-      <p class="price">Qiymət: ${product.price} AZN</p>
-    </div>
-    <div class="countContainer">
-      <button class="minus">−</button>
-      <span class="count">${product.quantity}</span>
-      <button class="plus">+</button>
-    </div>
-  `;
+      <img src="${product.img}">
+      <div class="product-info">
+        <h3>${product.name}</h3>
+        <p>${product.desc}</p>
+        <p class="price">Qiymət: ${product.price} AZN</p>
+      </div>
+      <div class="countContainer">
+        <button class="minus">−</button>
+        <span class="count">${product.quantity}</span>
+        <button class="plus">+</button>
+      </div>
+    `;
 
       const countSpan = card.querySelector('.count');
 
-      const updateQty = (delta) => {
+      const updateQty = delta => {
         if (delta < 0 && product.quantity === 0) return;
         product.quantity += delta;
         countSpan.textContent = product.quantity;
         updateOrderList();
       };
 
-      card.querySelector('.plus').addEventListener('click', () => updateQty(1));
-      card.querySelector('.minus').addEventListener('click', () => updateQty(-1));
+      card.querySelector('.plus').addEventListener('click', e => {
+        e.stopPropagation();
+        updateQty(1);
+      });
+
+      card.querySelector('.minus').addEventListener('click', e => {
+        e.stopPropagation();
+        updateQty(-1);
+      });
 
       return card;
     }
 
     // =================== OBSERVER ===================
+    function getObserverThreshold() {
+      return window.innerWidth <= 480 ? [0.25, 0.5] : [0, 0.25, 0.5, 0.75, 1];
+    }
+
     function initCategoryObserver() {
-      const visibility = new Map(); // id -> ratio
-      const stickyHeight = getStickyHeight();
-      const rootMarginPx = Math.round(stickyHeight / 2);
+      const visibility = new Map();
 
-      const observer = new IntersectionObserver((entries) => {
-        // Update visibility map with current intersection ratios
-        entries.forEach(entry => {
-          visibility.set(entry.target.id, entry.intersectionRatio);
-        });
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(e => visibility.set(e.target.id, e.intersectionRatio));
 
-        // Find section with highest visibility ratio
         let bestId = null;
         let bestRatio = 0;
-        for (const [id, ratio] of visibility.entries()) {
+        for (const [id, ratio] of visibility) {
           if (ratio > bestRatio) {
             bestRatio = ratio;
             bestId = id;
           }
         }
 
-        // Activate the most visible section's button
         if (bestId) {
           document.querySelectorAll('.category-btn').forEach(btn => {
-            const isActive = btn.dataset.target === bestId;
-            btn.classList.toggle('active', isActive);
-            if (isActive) {
-              btn.setAttribute('aria-current', 'true');
-              // Ensure active button is visible in navbar without changing page scroll
-              if (btn.scrollIntoView) {
-                btn.scrollIntoView({ inline: 'center', behavior: 'smooth', block: 'nearest' });
-              }
-            } else {
-              btn.removeAttribute('aria-current');
-            }
+            if (btn.dataset.target === bestId) activateNavLink(btn);
           });
         }
       }, {
-        // Use multiple thresholds for precise visibility tracking
-        threshold: [0, 0.05, 0.1, 0.25, 0.5, 0.75, 1.0],
-        // Root margin accounts for sticky navbar height
-        rootMargin: `-${rootMarginPx}px 0px -${rootMarginPx}px 0px`
+        threshold: getObserverThreshold(),
+        rootMargin: `-${getStickyHeight() / 2}px 0px`
       });
 
-      // Observe each category section
-      document.querySelectorAll(".category-section").forEach(section => {
-        visibility.set(section.id, 0);
-        observer.observe(section);
+      document.querySelectorAll('.category-section').forEach(sec => {
+        visibility.set(sec.id, 0);
+        observer.observe(sec);
       });
     }
-
-    // Initialize observer after page load to ensure proper visibility calculations
-    window.addEventListener('load', () => {
-      setTimeout(() => {
-        initCategoryObserver();
-      }, 50);
-    });
 
     // =================== POPUP ===================
     function initializePopup() {
       const popup = DOM.popup();
-      const closePopup = () => (popup.style.display = 'none');
+
+      const close = () => {
+        popup.style.display = 'none';
+        document.body.style.overflow = '';
+      };
 
       DOM.openBtn().addEventListener('click', () => {
         updateOrderList();
         popup.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
       });
 
-      DOM.closeBtn().addEventListener('click', closePopup);
-      popup.addEventListener('click', (e) => e.target === popup && closePopup());
+      DOM.closeBtn().addEventListener('click', close);
+      popup.addEventListener('click', e => e.target === popup && close());
     }
     initializePopup();
 
-    // =================== ORDER TOTAL ===================
+    // =================== ORDER ===================
     function calculateOrderTotal() {
+      let total = 0;
       const items = [];
-      let totalCents = 0;
 
       for (const cat in products) {
-        products[cat].forEach((product) => {
-          if (product.quantity > 0) {
-            const itemTotal = product.quantity * product.price;
-            totalCents += Math.round(itemTotal * 100);
-
-            items.push({
-              name: product.name,
-              quantity: product.quantity,
-              price: product.price,
-              itemTotal: itemTotal,
-            });
+        products[cat].forEach(p => {
+          if (p.quantity > 0) {
+            const sum = p.quantity * p.price;
+            total += sum;
+            items.push({ ...p, itemTotal: sum });
           }
         });
       }
-
-      return {
-        items: items,
-        total: totalCents / 100,
-      };
+      return { items, total };
     }
 
-    // =================== UPDATE ORDER LIST ===================
     function updateOrderList() {
-      const orderData = calculateOrderTotal();
-      const orderBox = DOM.orderBox();
+      const data = calculateOrderTotal();
+      const box = DOM.orderBox();
       const openBtn = DOM.openBtn();
 
-      orderBox.innerHTML = '';
+      box.innerHTML = '';
 
-      if (orderData.items.length === 0) {
+      if (!data.items.length) {
         DOM.totalDiv().textContent = 'Ümumi məbləğ: 0.00 AZN';
         openBtn.style.display = 'none';
         return;
@@ -1008,44 +971,42 @@
 
       openBtn.style.display = 'flex';
 
-      orderData.items.forEach(item => {
-        const div = document.createElement('div');
-        div.innerHTML = `<span>${item.name} x ${item.quantity}</span><span>${item.itemTotal.toFixed(2)} AZN</span>`;
-        orderBox.appendChild(div);
+      data.items.forEach(i => {
+        box.innerHTML += `<div><span>${i.name} x ${i.quantity}</span><span>${i.itemTotal.toFixed(2)} AZN</span></div>`;
       });
 
-      DOM.totalDiv().textContent =
-        `Ümumi məbləğ: ${orderData.total.toFixed(2)} AZN`;
+      DOM.totalDiv().textContent = `Ümumi məbləğ: ${data.total.toFixed(2)} AZN`;
     }
 
-    // =================== SEND WHATSAPP ===================
-    const WHATSAPP_PHONE = "515935433";
-
-    function formatOrderMessage(orderData) {
-      const items = orderData.items
-        .map(item => `${item.name}: ${item.quantity} — ${item.itemTotal.toFixed(2)} AZN`)
-        .join('\n');
-
-      return `*Sifariş siyahısı:*\n\n${items}\n\nÜmumi məbləğ: ${orderData.total.toFixed(2)} AZN`;
+    // =================== WHATSAPP ===================
+    function formatOrderMessage(data) {
+      return `*Sifariş siyahısı:*\n\n` +
+        data.items.map(i => `${i.name} x ${i.quantity} — ${i.itemTotal.toFixed(2)} AZN`).join('\n') +
+        `\n\nÜmumi məbləğ: ${data.total.toFixed(2)} AZN`;
     }
 
     function sendOrderViaWhatsApp() {
-      const orderData = calculateOrderTotal();
+      const btn = DOM.sendBtn();
+      btn.disabled = true;
 
-      if (orderData.items.length === 0) {
+      const data = calculateOrderTotal();
+      if (!data.items.length) {
         alert('Səbətiniz boşdur!');
+        btn.disabled = false;
         return;
       }
 
       window.open(
-        `https://wa.me/994${WHATSAPP_PHONE}?text=${encodeURIComponent(formatOrderMessage(orderData))}`,
+        `https://wa.me/994${WHATSAPP_PHONE}?text=${encodeURIComponent(formatOrderMessage(data))}`,
         '_blank'
       );
+
+      setTimeout(() => btn.disabled = false, 1500);
     }
 
     DOM.sendBtn().addEventListener('click', sendOrderViaWhatsApp);
-
   </script>
+
 </body>
 
 </html>
